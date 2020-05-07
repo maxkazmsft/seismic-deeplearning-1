@@ -31,9 +31,9 @@ from cv_lib.event_handlers import SnapshotHandler, logging_handlers, tensorboard
 from cv_lib.event_handlers.tensorboard_handlers import create_summary_writer
 from cv_lib.segmentation import extract_metric_from, models
 from cv_lib.segmentation.dutchf3.engine import create_supervised_evaluator, create_supervised_trainer
-from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash
+from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
 from cv_lib.segmentation.metrics import class_accuracy, class_iou, mean_class_accuracy, mean_iou, pixelwise_accuracy
-from cv_lib.utils import load_log_configuration
+from cv_lib.utils import load_log_configuration, generate_path
 from deepseismic_interpretation.dutchf3.data import get_patch_loader
 from default import _C as config
 from default import update_config
@@ -124,6 +124,7 @@ def run(*options, cfg=None, debug=False):
 
     # Training and Validation Loaders:
     TrainPatchLoader = get_patch_loader(config)
+    logging.info(f"Using {TrainPatchLoader}")
     train_set = TrainPatchLoader(
         config.DATASET.ROOT,
         config.DATASET.NUM_CLASSES,
@@ -131,7 +132,8 @@ def run(*options, cfg=None, debug=False):
         is_transform=True,
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
-        augmentations=train_aug
+        augmentations=train_aug,
+        debug=True
     )
     logger.info(train_set)
     n_classes = train_set.n_classes
@@ -143,6 +145,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
+        debug=True
     )
     logger.info(val_set)
 

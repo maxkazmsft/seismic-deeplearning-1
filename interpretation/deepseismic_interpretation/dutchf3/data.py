@@ -6,6 +6,10 @@ import warnings
 import segyio
 from os import path
 import scipy
+from cv_lib.utils import generate_path, mask_to_disk
+
+from matplotlib import pyplot as plt
+from PIL import Image
 
 # bugfix for scipy imports
 import scipy.misc
@@ -17,7 +21,7 @@ import logging
 from deepseismic_interpretation.dutchf3.utils.batch import (
     interpolate_to_fit_data,
     parse_labels_in_image,
-    get_coordinates_for_slice
+    get_coordinates_for_slice,
 )
 
 
@@ -118,16 +122,10 @@ class SectionLoader(data.Dataset):
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
+    :param bool debug: enable debugging output
     """
 
-    def __init__(
-        self,
-        data_dir,
-        n_classes,
-        split="train",
-        is_transform=True,
-        augmentations=None
-    ):
+    def __init__(self, data_dir, n_classes, split="train", is_transform=True, augmentations=None, debug=False):
         self.split = split
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -179,6 +177,7 @@ class TrainSectionLoader(SectionLoader):
     :param list augmentations: Data augmentations to apply to patches
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -190,6 +189,7 @@ class TrainSectionLoader(SectionLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TrainSectionLoader, self).__init__(
             data_dir,
@@ -199,6 +199,7 @@ class TrainSectionLoader(SectionLoader):
             augmentations=augmentations,
             seismic_path=seismic_path,
             label_path=label_path,
+            debug=debug,
         )
 
         if seismic_path is not None and label_path is not None:
@@ -231,6 +232,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
     :param list augmentations: Data augmentations to apply to patches
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -242,6 +244,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TrainSectionLoaderWithDepth, self).__init__(
             data_dir,
@@ -251,6 +254,7 @@ class TrainSectionLoaderWithDepth(TrainSectionLoader):
             augmentations=augmentations,
             seismic_path=seismic_path,
             label_path=label_path,
+            debug=debug,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -292,6 +296,7 @@ class TestSectionLoader(SectionLoader):
     :param list augmentations: Data augmentations to apply to patches
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -303,9 +308,10 @@ class TestSectionLoader(SectionLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TestSectionLoader, self).__init__(
-            data_dir, n_classes, split=split, is_transform=is_transform, augmentations=augmentations
+            data_dir, n_classes, split=split, is_transform=is_transform, augmentations=augmentations, debug=debug,
         )
 
         if "test1" in self.split:
@@ -342,6 +348,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
     :param list augmentations: Data augmentations to apply to patches
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -353,6 +360,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TestSectionLoaderWithDepth, self).__init__(
             data_dir,
@@ -362,6 +370,7 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
             augmentations=augmentations,
             seismic_path=seismic_path,
             label_path=label_path,
+            debug=debug,
         )
         self.seismic = add_section_depth_channels(self.seismic)  # NCWH
 
@@ -408,18 +417,11 @@ class PatchLoader(data.Dataset):
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
-    :param str seismic_path: Override file path for seismic data
-    :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
-        self,
-        data_dir,
-        n_classes,
-        stride=30,
-        patch_size=99,
-        is_transform=True,
-        augmentations=None
+        self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None, debug=False,
     ):
         self.data_dir = data_dir
         self.is_transform = is_transform
@@ -428,6 +430,7 @@ class PatchLoader(data.Dataset):
         self.patches = list()
         self.patch_size = patch_size
         self.stride = stride
+        self.debug=debug
 
     def pad_volume(self, volume):
         """
@@ -463,6 +466,13 @@ class PatchLoader(data.Dataset):
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
 
+        # dump images and labels to disk
+        if self.debug:
+            outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            generate_path(outdir)
+            mask_to_disk(im, f"{outdir}/{index}_img.png")
+            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
+
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
         return im, lbl
@@ -484,9 +494,12 @@ class TestPatchLoader(PatchLoader):
     :param int patch_size: Size of patch for training
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
+    :param bool debug: enable debugging output
     """
 
-    def __init__(self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None):
+    def __init__(
+        self, data_dir, n_classes, stride=30, patch_size=99, is_transform=True, augmentations=None, debug=False
+    ):
         super(TestPatchLoader, self).__init__(
             data_dir,
             n_classes,
@@ -494,6 +507,7 @@ class TestPatchLoader(PatchLoader):
             patch_size=patch_size,
             is_transform=is_transform,
             augmentations=augmentations,
+            debug=debug,
         )
         ## Warning: this is not used or tested
         raise NotImplementedError("This class is not correctly implemented.")
@@ -522,8 +536,7 @@ class TrainPatchLoader(PatchLoader):
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
-    :param str seismic_path: Override file path for seismic data
-    :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -537,6 +550,7 @@ class TrainPatchLoader(PatchLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TrainPatchLoader, self).__init__(
             data_dir,
@@ -544,7 +558,8 @@ class TrainPatchLoader(PatchLoader):
             stride=stride,
             patch_size=patch_size,
             is_transform=is_transform,
-            augmentations=augmentations
+            augmentations=augmentations,
+            debug=debug,
         )
 
         warnings.warn("This no longer pads the volume")
@@ -579,8 +594,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
     :param str split: split file to use for loading patches
     :param bool is_transform: Transform patch to dimensions expected by PyTorch
     :param list augmentations: Data augmentations to apply to patches
-    :param str seismic_path: Override file path for seismic data
-    :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -593,6 +607,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TrainPatchLoaderWithDepth, self).__init__(
             data_dir,
@@ -603,6 +618,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
             augmentations=augmentations,
             seismic_path=seismic_path,
             label_path=label_path,
+            debug=debug,
         )
 
     def __getitem__(self, index):
@@ -657,6 +673,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
     :param list augmentations: Data augmentations to apply to patches
     :param str seismic_path: Override file path for seismic data
     :param str label_path: Override file path for label data
+    :param bool debug: enable debugging output
     """
 
     def __init__(
@@ -670,6 +687,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         augmentations=None,
         seismic_path=None,
         label_path=None,
+        debug=False,
     ):
         super(TrainPatchLoaderWithSectionDepth, self).__init__(
             data_dir,
@@ -681,6 +699,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             augmentations=augmentations,
             seismic_path=seismic_path,
             label_path=label_path,
+            debug=debug,
         )
         self.seismic = add_section_depth_channels(self.seismic)
 
@@ -711,6 +730,13 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
             im = _transform_HWC_to_CHW(im)
+
+        # dump images and labels to disk
+        if self.debug:
+            outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            generate_path(outdir)
+            mask_to_disk(im[0,:,:], f"{outdir}/{index}_img.png")
+            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
@@ -796,32 +822,3 @@ def add_section_depth_channels(sections_numpy):
         image[1, :, :, row] = const
     image[2] = image[0] * image[1]
     return np.swapaxes(image, 0, 1)
-
-
-def get_seismic_labels():
-    return np.asarray(
-        [[69, 117, 180], [145, 191, 219], [224, 243, 248], [254, 224, 144], [252, 141, 89], [215, 48, 39]]
-    )
-
-
-@curry
-def decode_segmap(label_mask, n_classes=None, label_colours=get_seismic_labels()):
-    """Decode segmentation class labels into a colour image
-    Args:
-        label_mask (np.ndarray): an (N,H,W) array of integer values denoting
-            the class label at each spatial location.
-    Returns:
-        (np.ndarray): the resulting decoded color image (NCHW).
-    """
-    r = label_mask.copy()
-    g = label_mask.copy()
-    b = label_mask.copy()
-    for ll in range(0, n_classes):
-        r[label_mask == ll] = label_colours[ll, 0]
-        g[label_mask == ll] = label_colours[ll, 1]
-        b[label_mask == ll] = label_colours[ll, 2]
-    rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], label_mask.shape[2], 3))
-    rgb[:, :, :, 0] = r / 255.0
-    rgb[:, :, :, 1] = g / 255.0
-    rgb[:, :, :, 2] = b / 255.0
-    return np.transpose(rgb, (0, 3, 1, 2))

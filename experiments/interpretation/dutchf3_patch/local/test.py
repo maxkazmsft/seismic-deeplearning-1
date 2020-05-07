@@ -24,14 +24,13 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from albumentations import Compose, Normalize, PadIfNeeded, Resize
-from matplotlib import cm
-from PIL import Image
 from toolz import compose, curry, itertoolz, pipe, take
 from torch.utils import data
 
 from cv_lib.segmentation import models
-from cv_lib.segmentation.dutchf3.utils import current_datetime, generate_path, git_branch, git_hash
-from cv_lib.utils import load_log_configuration
+from cv_lib.segmentation.dutchf3.utils import current_datetime, git_branch, git_hash
+
+from cv_lib.utils import load_log_configuration, mask_to_disk, generate_path
 from deepseismic_interpretation.dutchf3.data import add_patch_depth_channels, get_seismic_labels, get_test_loader
 from default import _C as config
 from default import update_config
@@ -93,21 +92,6 @@ class runningScore(object):
 
     def reset(self):
         self.confusion_matrix = np.zeros((self.n_classes, self.n_classes))
-
-
-def normalize(array):
-    """
-    Normalizes a segmentation mask array to be in [0,1] range
-    """
-    min = array.min()
-    return (array - min) / (array.max() - min)
-
-
-def mask_to_disk(mask, fname):
-    """
-    write segmentation mask to disk using a particular colormap
-    """
-    Image.fromarray(cm.gist_earth(normalize(mask), bytes=True)).save(fname)
 
 
 def _transform_CHW_to_HWC(numpy_array):
