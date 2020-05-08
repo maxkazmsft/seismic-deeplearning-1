@@ -23,6 +23,13 @@ def mask_to_disk(mask, fname, cmap_name="Paired"):
     cmap = plt.get_cmap(cmap_name)
     Image.fromarray(cmap(normalize(mask), bytes=True)).save(fname)
 
+def image_to_disk(mask, fname, cmap_name="seismic"):
+    """
+    write segmentation image to disk using a particular colormap
+    """
+    cmap = plt.get_cmap(cmap_name)
+    Image.fromarray(cmap(normalize(mask), bytes=True)).save(fname)
+
 def decode_segmap(label_mask, colormap_name="Paired"):
     """
     Decode segmentation class labels into a colour image

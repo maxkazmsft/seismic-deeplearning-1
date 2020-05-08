@@ -6,7 +6,7 @@ import warnings
 import segyio
 from os import path
 import scipy
-from cv_lib.utils import generate_path, mask_to_disk
+from cv_lib.utils import generate_path, mask_to_disk, image_to_disk
 
 from matplotlib import pyplot as plt
 from PIL import Image
@@ -448,8 +448,7 @@ class PatchLoader(data.Dataset):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shift since we no longer pad
-        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -470,7 +469,7 @@ class PatchLoader(data.Dataset):
         if self.debug:
             outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            mask_to_disk(im, f"{outdir}/{index}_img.png")
+            image_to_disk(im, f"{outdir}/{index}_img.png")
             mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
 
         if self.is_transform:
@@ -514,14 +513,6 @@ class TestPatchLoader(PatchLoader):
         self.seismic = np.load(_train_data_for(self.data_dir))
         self.labels = np.load(_train_labels_for(self.data_dir))
 
-        # We are in test mode. Only read the given split. The other one might not
-        # be available.
-        # If txt_path is not provided, it will be assumed as below. Otherwise, provided path will be used for
-        # loading txt file and create patches.
-        if not txt_path:
-            self.split = "test1"  # TODO: Fix this can also be test2
-            #                     issue: https://github.com/microsoft/seismic-deeplearning/issues/274
-            txt_path = path.join(self.data_dir, "splits", "patch_" + self.split + ".txt")
         patch_list = tuple(open(txt_path, "r"))
         patch_list = [id_.rstrip() for id_ in patch_list]
         self.patches = patch_list
@@ -628,8 +619,7 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shift since we no longer pad
-        # issue https://github.com/microsoft/seismic-deeplearning/issues/273
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -641,8 +631,6 @@ class TrainPatchLoaderWithDepth(TrainPatchLoader):
             lbl = self.labels[idx : idx + self.patch_size, xdx, ddx : ddx + self.patch_size]
         im, lbl = _transform_WH_to_HW(im), _transform_WH_to_HW(lbl)
 
-        # TODO: Add check for rotation augmentations and raise warning if found
-        # issue: https://github.com/microsoft/seismic-deeplearning/issues/275
         if self.augmentations is not None:
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
@@ -710,8 +698,7 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         # Shift offsets the padding that is added in training
         # shift = self.patch_size if "test" not in self.split else 0
-        # TODO: Remember we are cancelling the shift since we no longer pad
-        # issue: https://github.com/microsoft/seismic-deeplearning/issues/273
+        # Remember we are cancelling the shift since we no longer pad        
         shift = 0
         idx, xdx, ddx = int(idx) + shift, int(xdx) + shift, int(ddx) + shift
 
@@ -733,9 +720,9 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
 
         # dump images and labels to disk
         if self.debug:
-            outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            mask_to_disk(im[0,:,:], f"{outdir}/{index}_img.png")
+            image_to_disk(im[0,:,:], f"{outdir}/{index}_img.png")
             mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
 
         if self.is_transform:

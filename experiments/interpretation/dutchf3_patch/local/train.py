@@ -133,6 +133,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
+        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
         debug=True
     )
     logger.info(train_set)
@@ -145,6 +146,7 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
+        #augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
         debug=True
     )
     logger.info(val_set)
@@ -232,7 +234,7 @@ def run(*options, cfg=None, debug=False):
         logging_handlers.log_metrics(engine, evaluator, stage="Validation")
         # dump validation set metrics at the very end for debugging purposes
         if engine.state.epoch == config.TRAIN.END_EPOCH and debug:
-            fname = f"metrics_test_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
+            fname = f"metrics_{config_file_name}_{config.TRAIN.MODEL_DIR}.json"
             metrics = evaluator.state.metrics
             out_dict = {x: metrics[x] for x in ["nll", "pixacc", "mca", "mIoU"]}
             with open(fname, "w") as fid:
