@@ -170,6 +170,14 @@ WHITE_LABEL = 0
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
+parser.add_argument(
+    "--type",
+    help="Type of data to generate",
+    type=str,
+    required=False,
+    choices=["checkerboard", "gradient", "binary"],
+    default="checkerboard",
+)
 parser.add_argument("--debug", help="Turn on debug mode", type=bool, required=False, default=False)
 
 """ main wrapper with profiler """
