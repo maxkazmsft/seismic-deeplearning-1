@@ -423,8 +423,8 @@ class TestSectionLoaderWithDepth(TestSectionLoader):
         if self.debug:
             outdir = f"testSectionLoaderWithDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(im[0, :, :], f"{outdir}/index_{index}_section_{section_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{section_name}_lbl.png")
+            image_to_disk(np.array(im[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_img.png")
+            mask_to_disk(np.array(lbl[0, :, :]), f"{outdir}/index_{index}_section_{section_name}_lbl.png")
 
         return im, lbl
 
@@ -506,8 +506,8 @@ class PatchLoader(data.Dataset):
         if self.debug:
             outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(im, f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            image_to_disk(np.array(im[0,:,:]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
+            mask_to_disk(np.array(lbl[0,:,:]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
 
         return im, lbl
 
@@ -767,8 +767,8 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
         if self.debug:
             outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
             generate_path(outdir)
-            image_to_disk(im[0,:,:], f"{outdir}/index_{index}_section_{patch_name}_img.png")
-            mask_to_disk(lbl, f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
+            image_to_disk(np.array(im[0,:,:]), f"{outdir}/index_{index}_section_{patch_name}_img.png")
+            mask_to_disk(np.array(lbl[0,:,:]), f"{outdir}/index_{index}_section_{patch_name}_lbl.png")
 
         return im, lbl
 
