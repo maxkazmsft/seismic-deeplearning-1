@@ -220,20 +220,13 @@ def _patch_label_2d(
             dim=0,
         )
 
-        # dump the data right before it's being put into the model
-        if debug:
-            outdir = f"batch_{split}"
-            generate_path(outdir)
-            for i in range(batch.shape[0]):
-                image_to_disk(np.array(batch[i,0,:,:]), f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_img.png")
-
         model_output = model(batch.to(device))
 
         for (hdx, wdx), output in zip(batch_indexes, model_output.detach().cpu()):
             output = output_processing(output)
             output_p[:, :, hdx + ps : hdx + ps + patch_size, wdx + ps : wdx + ps + patch_size,] += output
 
-        # dump the data right before it's being put into the model
+        # dump the data right before it's being put into the model and after scoring
         if debug:
             outdir = f"batch_{split}"
             generate_path(outdir)
@@ -354,6 +347,7 @@ def _write_section_file(labels, section_file):
 
 
 def test(*options, cfg=None, debug=False):
+
     update_config(config, options=options, config_file=cfg)
     n_classes = config.DATASET.NUM_CLASSES
 
