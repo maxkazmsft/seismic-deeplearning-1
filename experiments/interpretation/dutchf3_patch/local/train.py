@@ -133,7 +133,6 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=train_aug,
-        # augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
         debug=True,
     )
     logger.info(train_set)
@@ -146,7 +145,6 @@ def run(*options, cfg=None, debug=False):
         stride=config.TRAIN.STRIDE,
         patch_size=config.TRAIN.PATCH_SIZE,
         augmentations=val_aug,
-        # augmentations=Resize(config.TRAIN.AUGMENTATIONS.RESIZE.HEIGHT, config.TRAIN.AUGMENTATIONS.RESIZE.WIDTH, always_apply=True),
         debug=True,
     )
     logger.info(val_set)

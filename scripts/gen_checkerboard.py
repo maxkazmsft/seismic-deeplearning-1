@@ -30,6 +30,7 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     :param n_inlines: dim x
     :param n_crosslines: dim y
     :param n_depth: dim z
+    :param box_size: size of each checkerbox
     :return: numpy array
     """
     # inline by crossline by depth
@@ -69,6 +70,35 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
 
     # trim excess again
     return final_box[0:n_inlines, 0:n_crosslines, 0:n_depth]
+
+def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
+    """
+    Makes a 3D box gradient pattern in a particula direction
+
+    :param n_inlines: dim x
+    :param n_crosslines: dim y
+    :param n_depth: dim z
+    :param box_size: thichkness of gradient box
+    :param dir: direction of the gradient - can be crossline, inline or depth
+    :return: numpy array
+    """
+
+    axis = ["inline", "crossline", "depth"].index(dir)
+    n_points = (n_inlines, n_crosslines, n_depth)[axis]
+    n_classes = np.ceil(float(n_points)/box_size)
+    logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
+
+    output = np.ones((n_inlines, n_crosslines, n_depth))
+    start, finish = 0, box_size
+    for i in range(n_classes):
+        sl = [slice(None)] * output.ndim
+        sl[axis] = range(start, finish)
+        # set all values equal to class number, starting from 0
+        output[tuple(sl)] = i
+        start += box_size
+        finish = max(n_points, finish+box_size)
+
+    return output
 
 
 def mkdir(path):
@@ -146,7 +176,30 @@ def main(args):
 
     # substitute gradient dataset instead of checkerboard
     elif args.type == "gradient":
-        pass
+
+        logging.info("train gradient")
+        n_inlines, n_crosslines, n_depth = train_seismic.shape
+        checkerboard_train_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
+        checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
+
+        # create checkerbox
+        logging.info("test1 gradient")
+        n_inlines, n_crosslines, n_depth = test1_seismic.shape
+        checkerboard_test1_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
+        checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
+        # labels are integers and start from zero
+        checkerboard_test1_labels[checkerboard_test1_seismic < WHITE_LABEL] = WHITE_LABEL
+
+        logging.info("test2 gradient")
+        n_inlines, n_crosslines, n_depth = test2_seismic.shape
+        checkerboard_test2_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
+        checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
+        # labels are integers and start from zero
+        checkerboard_test2_labels[checkerboard_test2_seismic < WHITE_LABEL] = WHITE_LABEL
+
     # substitute binary dataset instead of checkerboard
     elif args.type == "binary":
 
