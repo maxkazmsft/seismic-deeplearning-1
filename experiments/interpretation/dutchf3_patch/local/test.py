@@ -228,18 +228,23 @@ def _patch_label_2d(
 
         # dump the data right before it's being put into the model and after scoring
         if debug:
-            outdir = f"batch_{split}"
+            outdir = f"debug/batch_{split}"
             generate_path(outdir)
             for i in range(batch.shape[0]):
-                image_to_disk(np.array(batch[i, 0, :, :]),
-                              f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_img.png")
+                image_to_disk(
+                    np.array(batch[i, 0, :, :]), f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_img.png"
+                )
                 # now dump model predictions
                 for nclass in range(num_classes):
-                    mask_to_disk(np.array(model_output[i,nclass,:,:].detach().cpu()), f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_class_{nclass}_pred.png")
+                    mask_to_disk(
+                        np.array(model_output[i, nclass, :, :].detach().cpu()),
+                        f"{outdir}/{batch_indexes[i][0]}_{batch_indexes[i][1]}_class_{nclass}_pred.png",
+                    )
 
     # crop the output_p in the middle
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
+
 
 def _evaluate_split(
     split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
@@ -247,14 +252,14 @@ def _evaluate_split(
     logger = logging.getLogger(__name__)
 
     TestSectionLoader = get_test_loader(config)
-    print(TestSectionLoader)
+
     test_set = TestSectionLoader(
         config.DATASET.ROOT,
         config.DATASET.NUM_CLASSES,
         split=split,
         is_transform=True,
         augmentations=section_aug,
-        debug=debug
+        debug=debug,
     )
 
     n_classes = test_set.n_classes
@@ -267,10 +272,10 @@ def _evaluate_split(
 
     try:
         output_dir = generate_path(
-            f"{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
+            f"debug/{config.OUTPUT_DIR}_test_{split}", git_branch(), git_hash(), config.MODEL.NAME, current_datetime(),
         )
     except TypeError:
-        output_dir = generate_path(f"{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
+        output_dir = generate_path(f"debug/{config.OUTPUT_DIR}_test_{split}", config.MODEL.NAME, current_datetime(),)
 
     running_metrics_split = runningScore(n_classes)
 
@@ -293,7 +298,7 @@ def _evaluate_split(
                 device,
                 n_classes,
                 split,
-                debug
+                debug,
             )
 
             pred = outputs.detach().max(1)[1].numpy()
