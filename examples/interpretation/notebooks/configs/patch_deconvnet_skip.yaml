@@ -6,7 +6,7 @@ GPUS: (0,)
 OUTPUT_DIR: 'output'
 LOG_DIR: 'log'
 WORKERS: 4
-PRINT_FREQ: 10
+PRINT_FREQ: 50
 LOG_CONFIG: logging.conf
 SEED: 2019
 
@@ -19,17 +19,18 @@ MODEL:
   NAME: patch_deconvnet_skip
   IN_CHANNELS: 1
 
+
 TRAIN:
   BATCH_SIZE_PER_GPU: 64
   BEGIN_EPOCH: 0
-  END_EPOCH: 300
+  END_EPOCH: 100
   MIN_LR: 0.001
   MAX_LR: 0.02
   MOMENTUM: 0.9
   WEIGHT_DECAY: 0.0001
   SNAPSHOTS: 5
   AUGMENTATION: True
-  DEPTH: "none" #"patch" # Options are none, patch, and section
+  DEPTH: "none" #"patch" # Options are No, Patch and Section
   STRIDE: 50
   PATCH_SIZE: 99
   AUGMENTATIONS:
@@ -44,12 +45,12 @@ TRAIN:
   MODEL_DIR: "models"
 
 VALIDATION:
-  BATCH_SIZE_PER_GPU: 64
+  BATCH_SIZE_PER_GPU: 512
 
 TEST: 
-  MODEL_PATH: ""
+  MODEL_PATH: '/data/home/mat/repos/DeepSeismic/examples/interpretation/notebooks/output/models/model_patch_deconvnet_skip_2.pth'
   TEST_STRIDE: 10
-  SPLIT: 'Both' # Can be Both, Test1, Test2
+  SPLIT: 'test1' # Can be both, test1, test2
   INLINE: True
   CROSSLINE: True
   POST_PROCESSING: 

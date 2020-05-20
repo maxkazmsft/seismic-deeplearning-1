@@ -245,7 +245,6 @@ def _patch_label_2d(
     output = output_p[:, :, ps:-ps, ps:-ps]
     return output
 
-
 def _evaluate_split(
     split, section_aug, model, pre_processing, output_processing, device, running_metrics_overall, config, debug=False,
 ):

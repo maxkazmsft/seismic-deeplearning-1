@@ -502,6 +502,13 @@ class PatchLoader(data.Dataset):
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
 
+        # dump images and labels to disk
+        if self.debug:
+            outdir = f"patchLoader_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            generate_path(outdir)
+            image_to_disk(im, f"{outdir}/{index}_img.png")
+            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
+
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
 
@@ -762,6 +769,13 @@ class TrainPatchLoaderWithSectionDepth(TrainPatchLoader):
             augmented_dict = self.augmentations(image=im, mask=lbl)
             im, lbl = augmented_dict["image"], augmented_dict["mask"]
             im = _transform_HWC_to_CHW(im)
+
+        # dump images and labels to disk
+        if self.debug:
+            outdir = f"patchLoaderWithSectionDepth_{self.split}_{'aug' if self.augmentations is not None else 'noaug'}"
+            generate_path(outdir)
+            image_to_disk(im[0,:,:], f"{outdir}/{index}_img.png")
+            mask_to_disk(lbl, f"{outdir}/{index}_lbl.png")
 
         if self.is_transform:
             im, lbl = self.transform(im, lbl)
