@@ -170,7 +170,7 @@ We use [YACS](https://github.com/rbgirshick/yacs) configuration library to manag
 - __command line__ - Finally, options can be passed in through `options` argument, and those will override arguments loaded from the configuration file. We created CLIs for all our scripts (using Python Fire library), so you can pass these options via command-line arguments, like so:
 
     ```
-    python train.py DATASET.ROOT "/mnt/dutchf3" TRAIN.END_EPOCH 10
+    python train.py DATASET.ROOT "/home/username/data/dutch/data" TRAIN.END_EPOCH 10
     ```
 
 
@@ -207,7 +207,7 @@ pip install segyviewer
 To visualize cross-sections of a 3D volume, you can run
 [segyviewer](https://github.com/equinor/segyviewer) like so:
 ```bash
-segyviewer "${HOME}/data/dutchf3/data.segy"
+segyviewer "${HOME}/home/username/data/dutch/data.segy"
 ```
 
 ### Benchmarks
