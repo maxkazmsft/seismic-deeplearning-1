@@ -21,6 +21,7 @@ myname = os.path.realpath(__file__)
 mypath = os.path.dirname(myname)
 myname = os.path.basename(myname)
 
+
 def make_box(n_inlines, n_crosslines, n_depth, box_size):
     """
     Makes a 3D box in checkerboard pattern.
@@ -69,6 +70,7 @@ def make_box(n_inlines, n_crosslines, n_depth, box_size):
     # trim excess again
     return final_box[0:n_inlines, 0:n_crosslines, 0:n_depth]
 
+
 def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     """
     Makes a 3D box gradient pattern in a particula direction
@@ -81,9 +83,9 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
     :return: numpy array
     """
 
-    axis = ["inline", "crossline", "depth"].index(dir)
+    axis = GRADIENT_DIR.index(dir)
     n_points = (n_inlines, n_crosslines, n_depth)[axis]
-    n_classes = np.ceil(float(n_points)/box_size)
+    n_classes = int(np.ceil(float(n_points) / box_size))
     logging.info(f"GRADIENT: we will output {n_classes} classes in the {dir} direction")
 
     output = np.ones((n_inlines, n_crosslines, n_depth))
@@ -94,7 +96,7 @@ def make_gradient(n_inlines, n_crosslines, n_depth, box_size, dir="inline"):
         # set all values equal to class number, starting from 0
         output[tuple(sl)] = i
         start += box_size
-        finish = max(n_points, finish+box_size)
+        finish = min(n_points, finish + box_size)
 
     return output
 
@@ -177,14 +179,18 @@ def main(args):
 
         logging.info("train gradient")
         n_inlines, n_crosslines, n_depth = train_seismic.shape
-        checkerboard_train_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_train_seismic = make_gradient(
+            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
+        )
         checkerboard_train_seismic = checkerboard_train_seismic.astype(train_seismic.dtype)
         checkerboard_train_labels = checkerboard_train_seismic.astype(train_labels.dtype)
 
         # create checkerbox
         logging.info("test1 gradient")
         n_inlines, n_crosslines, n_depth = test1_seismic.shape
-        checkerboard_test1_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_test1_seismic = make_gradient(
+            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
+        )
         checkerboard_test1_seismic = checkerboard_test1_seismic.astype(test1_seismic.dtype)
         checkerboard_test1_labels = checkerboard_test1_seismic.astype(test1_labels.dtype)
         # labels are integers and start from zero
@@ -192,7 +198,9 @@ def main(args):
 
         logging.info("test2 gradient")
         n_inlines, n_crosslines, n_depth = test2_seismic.shape
-        checkerboard_test2_seismic = make_gradient(n_inlines, n_crosslines, n_depth, args.box_size)
+        checkerboard_test2_seismic = make_gradient(
+            n_inlines, n_crosslines, n_depth, args.box_size, dir=args.gradient_dir
+        )
         checkerboard_test2_seismic = checkerboard_test2_seismic.astype(test2_seismic.dtype)
         checkerboard_test2_labels = checkerboard_test2_seismic.astype(test2_labels.dtype)
         # labels are integers and start from zero
@@ -239,12 +247,21 @@ BLACK = 1
 WHITE_LABEL = 0
 BLACK_LABEL = BLACK
 TYPES = ["checkerboard", "gradient", "binary"]
+GRADIENT_DIR = ["inline", "crossline", "depth"]
 
 parser.add_argument("--dataroot", help="Root location of the input data", type=str, required=True)
 parser.add_argument("--dataout", help="Root location of the output data", type=str, required=True)
 parser.add_argument("--box_size", help="Size of the bounding box", type=int, required=False, default=100)
 parser.add_argument(
     "--type", help="Type of data to generate", type=str, required=False, choices=TYPES, default="checkerboard",
+)
+parser.add_argument(
+    "--gradient_dir",
+    help="Direction in which to build the gradient",
+    type=str,
+    required=False,
+    choices=GRADIENT_DIR,
+    default="inline",
 )
 parser.add_argument("--debug", help="Turn on debug mode", type=bool, required=False, default=False)
 
