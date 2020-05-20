@@ -76,7 +76,11 @@ def main(args):
                 )
             except subprocess.CalledProcessError as err:
                 logging.info(f'ERROR: \n{err}')
-                logging.info(f"Have {len(err.stdout)} output bytes: \n{err.stdout.decode('utf-8')}")
+                decoded_stdout = err.stdout.decode('utf-8')
+                log_file = "dev_build.latest_error.log"
+                logging.info(f"Have {len(err.stdout)} output bytes in {log_file}")
+                with open(log_file, 'w') as log_file:
+                    log_file.write(decoded_stdout)
                 sys.exit()
             else:
                 logging.info(f"returncode: {completed.returncode}")

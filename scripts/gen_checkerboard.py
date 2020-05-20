@@ -4,7 +4,6 @@
 """ libraries """
 
 import numpy as np
-import sys
 import os
 
 np.set_printoptions(linewidth=200)
@@ -21,7 +20,6 @@ parser = argparse.ArgumentParser()
 myname = os.path.realpath(__file__)
 mypath = os.path.dirname(myname)
 myname = os.path.basename(myname)
-
 
 def make_box(n_inlines, n_crosslines, n_depth, box_size):
     """
